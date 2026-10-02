@@ -35,7 +35,8 @@ body { padding: 10px; }
   word-break: break-word;
   color: var(--accent);
 }
-.out:not(:empty) { padding: 2px 18px 12px; }
+.out:not(:empty), .out.pending { padding: 2px 18px 12px; }
+.out.pending:empty::before { content: "翻译中"; color: var(--fg-faint); font-size: 14px; }
 .out.pending { color: var(--fg-muted); }
 .out.pending::after {
   content: "";

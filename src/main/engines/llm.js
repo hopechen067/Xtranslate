@@ -14,8 +14,9 @@ function joinUrl(base, path) {
   return b + p;
 }
 
+// 下限给足：推理模型会先花几百上千 token 思考，上限太小时译文部分会是空的
 function maxTokensFor(text) {
-  return Math.min(4096, String(text).length * 4 + 64);
+  return Math.min(8192, Math.max(2048, String(text).length * 4 + 256));
 }
 
 function hostOf(baseUrl) {
@@ -91,16 +92,15 @@ async function translateLLM(opts) {
   if (!res.ok) throw httpFail(res.status, service);
 
   let accumulated = '';
+  let reasoned = 0;
   try {
     await readSSE(res.body, (data) => {
       if (!String(data).trim()) return;
-      if (kind === 'anthropic') {
-        accumulated += takeAnthropicDelta(data);
-      } else {
-        const piece = takeOpenAIDelta(data);
-        if (piece.done) return;
-        accumulated += piece.delta;
-      }
+      const piece = kind === 'anthropic' ? takeAnthropicDelta(data) : takeOpenAIDelta(data);
+      if (piece.done) return;
+      reasoned += piece.reasoning.length;
+      if (!piece.delta) return;
+      accumulated += piece.delta;
       if (opts.onPartial) opts.onPartial(accumulated);
     });
   } catch (err) {
@@ -108,7 +108,9 @@ async function translateLLM(opts) {
     if (err instanceof SyntaxError) throw fail('BAD_RESPONSE', { service, kind: 'llm' });
     throw err;
   }
-  return cleanOutput(accumulated);
+  const out = cleanOutput(accumulated);
+  if (!out) throw fail(reasoned ? 'REASONING_ONLY' : 'EMPTY', { service, kind: 'llm' });
+  return out;
 }
 
 module.exports = { translateLLM, joinUrl, maxTokensFor, hostOf };

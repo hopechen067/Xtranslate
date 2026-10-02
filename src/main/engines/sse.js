@@ -52,23 +52,28 @@ async function readSSE(body, onData) {
   }
 }
 
-/** OpenAI 兼容流：choices[0].delta.content，[DONE] 结束。 */
+/**
+ * OpenAI 兼容流：choices[0].delta.content，[DONE] 结束。
+ * 推理模型（DeepSeek/Qwen 等）会先流出 reasoning_content（OpenRouter 叫 reasoning），只计数不显示。
+ */
 function takeOpenAIDelta(dataStr) {
   const trimmed = String(dataStr).trim();
-  if (trimmed === '[DONE]') return { done: true, delta: '' };
+  if (trimmed === '[DONE]') return { done: true, delta: '', reasoning: '' };
   const json = JSON.parse(trimmed);
-  const choice = json && json.choices && json.choices[0];
-  const delta = choice && choice.delta && choice.delta.content;
-  return { done: false, delta: typeof delta === 'string' ? delta : '' };
+  const d = (json && json.choices && json.choices[0] && json.choices[0].delta) || {};
+  const reasoning = typeof d.reasoning_content === 'string' ? d.reasoning_content
+    : typeof d.reasoning === 'string' ? d.reasoning : '';
+  return { done: false, delta: typeof d.content === 'string' ? d.content : '', reasoning };
 }
 
-/** Anthropic 流：content_block_delta 里的 delta.text。 */
+/** Anthropic 流：content_block_delta 里的 delta.text（thinking_delta 只计数）。 */
 function takeAnthropicDelta(dataStr) {
   const json = JSON.parse(String(dataStr).trim());
-  if (json && json.type === 'content_block_delta' && json.delta && typeof json.delta.text === 'string') {
-    return json.delta.text;
+  if (json && json.type === 'content_block_delta' && json.delta) {
+    if (typeof json.delta.text === 'string') return { delta: json.delta.text, reasoning: '' };
+    if (typeof json.delta.thinking === 'string') return { delta: '', reasoning: json.delta.thinking };
   }
-  return '';
+  return { delta: '', reasoning: '' };
 }
 
 module.exports = {
