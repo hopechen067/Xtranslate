@@ -49,7 +49,7 @@ function render() {
   $('hotkey').textContent = cfg.hotkey || '未设置';
   $('hk-hint').textContent = cfg.hotkey || '热键';
   $('live').checked = cfg.livePreview !== false;
-  $('delay').value = String(cfg.previewDelayMs || 500);
+  $('delay').value = String(cfg.previewDelayMs || 300);
   $('delay').disabled = !$('live').checked;
   $('restore').checked = cfg.restoreClipboard !== false;
   $('login').checked = !!cfg.launchAtLogin;

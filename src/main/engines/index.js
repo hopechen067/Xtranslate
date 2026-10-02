@@ -4,6 +4,19 @@ const { detectDirection } = require('../prompt');
 const { userMessage } = require('../errors');
 const { translateMicrosoft } = require('./microsoft');
 const { translateGoogle } = require('./google');
+const { translateTencent } = require('./tencent');
+const { warmupMicrosoft } = require('./microsoft');
+
+const FREE = {
+  microsoft: translateMicrosoft,
+  google: translateGoogle,
+  tencent: translateTencent,
+};
+
+function freeProvider(config) {
+  const id = config && config.free && config.free.provider;
+  return FREE[id] ? id : 'microsoft';
+}
 const { translateLLM } = require('./llm');
 
 function resolveDirection(text, direction) {
@@ -49,9 +62,8 @@ async function translate(opts) {
       return { text, direction };
     }
 
-    const provider = (config.free && config.free.provider) || 'microsoft';
-    const run = provider === 'google' ? translateGoogle : translateMicrosoft;
-    const service = provider === 'google' ? 'google' : 'microsoft';
+    const service = freeProvider(config);
+    const run = FREE[service];
     let text;
     try {
       text = await run({
@@ -69,12 +81,18 @@ async function translate(opts) {
     if (opts.onPartial) opts.onPartial(text);
     return { text, direction };
   } catch (err) {
-    const provider = (config.free && config.free.provider) || 'microsoft';
     const ctx = engine === 'llm'
       ? { kind: 'llm', service: err && err.service }
-      : { kind: 'free', service: provider === 'google' ? 'google' : 'microsoft' };
+      : { kind: 'free', service: freeProvider(config) };
     asUserError(err, ctx);
   }
 }
 
-module.exports = { translate, resolveDirection };
+/** 呼出浮窗/启动时预热当前免费引擎（目前只有微软需要先拿 token）。 */
+function warmup(config) {
+  if ((config && config.engine) === 'llm') return Promise.resolve(false);
+  if (freeProvider(config) !== 'microsoft') return Promise.resolve(false);
+  return warmupMicrosoft();
+}
+
+module.exports = { translate, resolveDirection, warmup };

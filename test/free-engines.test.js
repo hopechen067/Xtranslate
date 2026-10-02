@@ -142,3 +142,63 @@ test('Google 连不上时给出可切换的提示', async () => {
     },
   );
 });
+
+test('微软预热后，并发翻译只拿一次 token', async () => {
+  resetTokenCache();
+  const { warmupMicrosoft } = require('../src/main/engines/microsoft');
+  let pages = 0;
+  let posts = 0;
+  const fetchImpl = async (url) => {
+    if (String(url).includes('/translator')) {
+      pages += 1;
+      await new Promise((r) => setTimeout(r, 20));
+      return pageResponse();
+    }
+    posts += 1;
+    return jsonResponse(200, [{ translations: [{ text: 'hi' }] }]);
+  };
+  const warm = warmupMicrosoft(fetchImpl);
+  const [a, b] = await Promise.all([
+    translateMicrosoft({ text: '你好', direction: 'zh2en', fetchImpl }),
+    translateMicrosoft({ text: '嗨', direction: 'zh2en', fetchImpl }),
+  ]);
+  assert.equal(await warm, true);
+  assert.equal(a, 'hi');
+  assert.equal(b, 'hi');
+  assert.equal(pages, 1);
+  assert.equal(posts, 2);
+  resetTokenCache();
+});
+
+test('腾讯：请求格式与结果解析', async () => {
+  const { parseTencent } = require('../src/main/engines/tencent');
+  let sent;
+  const r = await translate({
+    text: 'No worries',
+    engine: 'free',
+    config: { free: { provider: 'tencent' } },
+    fetchImpl: async (url, opts) => {
+      sent = { url: String(url), body: JSON.parse(opts.body) };
+      return jsonResponse(200, { auto_translation: ['别担心'] });
+    },
+  });
+  assert.equal(r.text, '别担心');
+  assert.equal(r.direction, 'en2zh');
+  assert.equal(sent.url, 'https://transmart.qq.com/api/imt');
+  assert.equal(sent.body.source.lang, 'en');
+  assert.equal(sent.body.target.lang, 'zh');
+  assert.deepEqual(sent.body.source.text_list, ['No worries']);
+  assert.throws(() => parseTencent({ header: { ret_code: 'error' } }));
+});
+
+test('腾讯：网络错误给出腾讯的提示', async () => {
+  await assert.rejects(
+    translate({
+      text: '你好',
+      engine: 'free',
+      config: { free: { provider: 'tencent' } },
+      fetchImpl: async () => { throw new TypeError('fetch failed'); },
+    }),
+    /腾讯翻译/,
+  );
+});

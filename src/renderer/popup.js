@@ -12,7 +12,7 @@ const state = {
   dir: 'auto',
   engine: 'free',
   livePreview: true,
-  delay: 500,
+  delay: 300,
   seq: 0,
   cur: null,          // {id, text, dir, engine, done, result, error, promise}
   wantCommit: false,
@@ -182,7 +182,7 @@ function applyConfig(cfg) {
   if (!cfg) return;
   state.engine = cfg.engine || state.engine;
   state.livePreview = cfg.livePreview !== false;
-  state.delay = Number(cfg.previewDelayMs) || 500;
+  state.delay = Number(cfg.previewDelayMs) || 300;
   renderChips();
 }
 window.xt.onConfigChanged(applyConfig);

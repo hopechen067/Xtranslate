@@ -18,7 +18,7 @@ const {
 
 const { PROVIDERS } = require('./providers');
 const { createConfigStore, mergeConfig } = require('./config');
-const { translate } = require('./engines');
+const { translate, warmup } = require('./engines');
 const { captureForeground, commitPaste } = require('./paste');
 
 const POPUP_WIDTH = 560;
@@ -150,6 +150,7 @@ function showPopup() {
   popup.show();
   popup.focus();
   emitShow();
+  warmup(store.get()); // token 有缓存时是空操作；过期了就趁用户打字时重新拿
 }
 
 function hidePopup() {
@@ -231,6 +232,7 @@ function setConfig(partial) {
   }
   if (partial && Object.prototype.hasOwnProperty.call(partial, 'launchAtLogin')) {
     applyLogin(!!store.get().launchAtLogin);
+  warmup(store.get());
   }
   broadcast(pub);
   refreshTray();
@@ -409,6 +411,7 @@ async function start() {
   const initial = applyHotkey(store.get().hotkey);
   if (!initial.ok) warn(initial.message);
   applyLogin(!!store.get().launchAtLogin);
+  warmup(store.get());
 
   console.log('[xtranslate] ready', JSON.stringify({
     hotkey: store.get().hotkey,

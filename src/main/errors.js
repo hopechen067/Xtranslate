@@ -5,11 +5,18 @@
  * 不读取请求头，避免把 API Key 带进文案。
  */
 
+const FREE_NAMES = { google: 'Google', microsoft: '微软翻译', tencent: '腾讯翻译' };
+
 function networkHint(service, timedOut) {
   if (service === 'google') {
     return timedOut
       ? '连接 Google 超时，换微软或大模型试试'
       : '网络连不上 Google，换微软或大模型试试';
+  }
+  if (service === 'tencent') {
+    return timedOut
+      ? '连接腾讯翻译超时，换微软或大模型试试'
+      : '网络连不上腾讯翻译，换微软或大模型试试';
   }
   if (service === 'microsoft') {
     return timedOut
@@ -38,14 +45,14 @@ function userMessage(err, ctx = {}) {
   const kind = ctx.kind || err.kind;
   if (status === 401 || status === 403) {
     if (kind === 'free') {
-      const who = (ctx.service || err.service) === 'google' ? 'Google' : '微软翻译';
+      const who = FREE_NAMES[ctx.service || err.service] || '微软翻译';
       return `${who}拒绝了这次请求，换一个引擎或改用大模型试试`;
     }
     return 'API Key 无效或没有权限';
   }
   if (status === 404) {
     if (kind === 'free') {
-      const who = (ctx.service || err.service) === 'google' ? 'Google' : '微软翻译';
+      const who = FREE_NAMES[ctx.service || err.service] || '微软翻译';
       return `${who}的免费接口不可用，换一个引擎或改用大模型试试`;
     }
     return '模型名或接口地址不对';
@@ -60,6 +67,7 @@ function userMessage(err, ctx = {}) {
   if (err.code === 'BAD_RESPONSE') {
     if (service === 'google') return 'Google 翻译返回了无法识别的结果，换微软或大模型试试';
     if (service === 'microsoft') return '微软翻译返回了无法识别的结果，换 Google 或大模型试试';
+    if (service === 'tencent') return '腾讯翻译返回了无法识别的结果，换微软或大模型试试';
     return '翻译结果无法识别';
   }
 

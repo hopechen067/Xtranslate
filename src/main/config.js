@@ -15,7 +15,7 @@ const DEFAULT_CONFIG = {
     apiKeys: {},  // 每个服务商各存一份，切换服务商时不会把 A 的 Key 发给 B
   },
   livePreview: true,
-  previewDelayMs: 500,
+  previewDelayMs: 300,
   restoreClipboard: true,
   launchAtLogin: false,
 };
