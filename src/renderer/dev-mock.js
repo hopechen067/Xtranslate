@@ -4,7 +4,7 @@ if (!window.xt) {
   const listeners = { partial: [], show: [], config: [] };
   let cfg = {
     hotkey: 'Alt+Q', engine: 'free', free: { provider: 'microsoft' },
-    llm: { provider: 'zhipu', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4.7-flash', apiKeySet: false },
+    llm: { provider: 'zhipu', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash-250414', apiKeySet: false },
     livePreview: true, previewDelayMs: 500, restoreClipboard: true, launchAtLogin: false,
   };
   const canned = { '我先撤了哈，明天见': "I'm heading out, see you tomorrow!", 'No worries, take your time!': '没事没事，你慢慢来！' };

@@ -10,11 +10,11 @@ const NO_THINK_OPENROUTER = { reasoning: { enabled: false } };
 
 const PROVIDERS = [
   {
-    id: 'zhipu', name: '智谱 GLM · 免费', kind: 'openai', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4.7-flash',
+    id: 'zhipu', name: '智谱 GLM · 免费', kind: 'openai', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash-250414',
     keyUrl: 'https://open.bigmodel.cn/usercenter/apikeys', note: '国内直连，长期免费',
     models: [
-      { id: 'glm-4.7-flash', free: 'free', note: '推荐', extra: NO_THINK_GLM },
-      { id: 'glm-4-flash-250414', free: 'free' },
+      { id: 'glm-4-flash-250414', free: 'free', note: '推荐 · 最快' }, // 实测口语译文好、响应快
+      { id: 'glm-4.7-flash', free: 'free', note: '新一代', extra: NO_THINK_GLM },
     ],
   },
   {

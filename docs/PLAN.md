@@ -41,7 +41,7 @@
   "hotkey": "Alt+Q",
   "engine": "free",              // "free" | "llm"
   "free": { "provider": "microsoft" },   // "microsoft" | "google"
-  "llm": { "provider": "zhipu", "baseUrl": "https://open.bigmodel.cn/api/paas/v4", "model": "glm-4.7-flash", "apiKey": "<加密存储>" },
+  "llm": { "provider": "zhipu", "baseUrl": "https://open.bigmodel.cn/api/paas/v4", "model": "glm-4-flash-250414", "apiKey": "<加密存储>" },
   "livePreview": true,
   "previewDelayMs": 500,
   "restoreClipboard": true,
