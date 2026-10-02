@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>Xtranslate 设置</title>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Xtranslate</h1>
+      <p>中英互译输入法 · 按 <kbd id="hk-hint">Alt+Q</kbd> 随处呼出</p>
+    </header>
+
+    <section>
+      <h2>翻译引擎</h2>
+      <div class="seg" role="radiogroup">
+        <label><input type="radio" name="engine" value="free"><span><b>免费引擎</b><small>无需 Key，开箱即用，译文偏书面</small></span></label>
+        <label><input type="radio" name="engine" value="llm"><span><b>大模型 · 口语</b><small>填自己的 API Key，译文像日常说话</small></span></label>
+      </div>
+      <p class="tip">浮窗里按 <kbd>Ctrl+E</kbd> 可以随时在两种引擎之间切换。</p>
+    </section>
+
+    <section id="free-box">
+      <h2>免费引擎</h2>
+      <div class="row">
+        <label for="free-provider">服务</label>
+        <select id="free-provider">
+          <option value="microsoft">微软翻译（国内可直连）</option>
+          <option value="google">谷歌翻译（国内需代理）</option>
+        </select>
+      </div>
+      <div class="row end"><button class="btn" data-test="free">测试</button><span class="result" id="free-result"></span></div>
+    </section>
+
+    <section id="llm-box">
+      <h2>大模型</h2>
+      <div class="row">
+        <label for="llm-provider">服务商</label>
+        <select id="llm-provider"></select>
+      </div>
+      <div class="row">
+        <label for="llm-base">接口地址</label>
+        <input id="llm-base" type="url" spellcheck="false" placeholder="https://…">
+      </div>
+      <div class="row">
+        <label for="llm-model">模型</label>
+        <input id="llm-model" list="llm-models" spellcheck="false" placeholder="模型名">
+        <datalist id="llm-models"></datalist>
+      </div>
+      <div class="row">
+        <label for="llm-key">API Key</label>
+        <input id="llm-key" type="password" spellcheck="false" autocomplete="off" placeholder="sk-…">
+      </div>
+      <p class="tip" id="key-tip"></p>
+      <div class="row end"><button class="btn primary" data-test="llm">保存并测试</button><span class="result" id="llm-result"></span></div>
+    </section>
+
+    <section>
+      <h2>常规</h2>
+      <div class="row">
+        <label>呼出热键</label>
+        <button class="hotkey" id="hotkey" title="点击后按下新的组合键">Alt+Q</button>
+        <span class="result" id="hotkey-result"></span>
+      </div>
+      <label class="switch"><input type="checkbox" id="live"><span>边打边预览译文</span></label>
+      <div class="row indent">
+        <label for="delay">停顿多久开始翻译</label>
+        <select id="delay">
+          <option value="300">0.3 秒</option>
+          <option value="500">0.5 秒</option>
+          <option value="800">0.8 秒</option>
+          <option value="1200">1.2 秒</option>
+        </select>
+      </div>
+      <label class="switch"><input type="checkbox" id="restore"><span>上屏后恢复原来的剪贴板内容</span></label>
+      <label class="switch"><input type="checkbox" id="login"><span>开机自动启动</span></label>
+    </section>
+  </div>
+  <script src="dev-mock.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
