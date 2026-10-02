@@ -1,7 +1,7 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const xt = window.xt;
+const api = window.xt; // 不能叫 xt：contextBridge 已把 xt 定义为不可重声明的全局
 let providers = [];
 let cfg = null;
 
@@ -14,7 +14,7 @@ function setResult(el, text, kind) {
 
 async function save(partial) {
   try {
-    cfg = await xt.setConfig(partial);
+    cfg = await api.setConfig(partial);
     render();
     return true;
   } catch (e) {
@@ -92,7 +92,7 @@ for (const btn of document.querySelectorAll('[data-test]')) {
         await save(partial);
         $('llm-key').value = '';
       }
-      const r = await xt.testEngine({ engine });
+      const r = await api.testEngine({ engine });
       if (r.ok) setResult(out, `✓ ${r.sample}（${r.ms} ms）`, 'ok');
       else setResult(out, r.error || '失败', 'err');
     } catch (e) {
@@ -160,11 +160,11 @@ hk.addEventListener('keydown', async (e) => {
   }
 });
 
-xt.onConfigChanged((c) => { cfg = c; render(); });
+api.onConfigChanged((c) => { cfg = c; render(); });
 
 (async () => {
-  providers = await xt.getProviders();
+  providers = await api.getProviders();
   $('llm-provider').replaceChildren(...providers.map((p) => Object.assign(document.createElement('option'), { value: p.id, textContent: p.name })));
-  cfg = await xt.getConfig();
+  cfg = await api.getConfig();
   render();
 })();

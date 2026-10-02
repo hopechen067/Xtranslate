@@ -26,3 +26,11 @@ test('src 下所有 JS 文件语法正确', () => {
     }
   }
 });
+
+test('渲染进程脚本不在顶层声明 xt（会与 contextBridge 暴露的全局冲突，整个脚本加载失败）', () => {
+  const dir = path.join(__dirname, '..', 'src', 'renderer');
+  for (const name of fs.readdirSync(dir).filter((n) => n.endsWith('.js') && n !== 'dev-mock.js')) {
+    const src = fs.readFileSync(path.join(dir, name), 'utf8');
+    assert.doesNotMatch(src, /^(const|let|var|function|class)\s+xt\b/m, name);
+  }
+});

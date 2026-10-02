@@ -10,7 +10,8 @@ if (!window.xt) {
   const canned = { '我先撤了哈，明天见': "I'm heading out, see you tomorrow!", 'No worries, take your time!': '没事没事，你慢慢来！' };
   const timers = {};
   const merge = (a, b) => { for (const k in b) a[k] = b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) ? merge({ ...(a[k] || {}) }, b[k]) : b[k]; return a; };
-  window.xt = {
+  // 和 contextBridge 一样定义成不可重声明的全局，页面里再写 const xt 会像在 Electron 里一样报错
+  Object.defineProperty(window, 'xt', { configurable: false, enumerable: true, writable: false, value: {
     translate({ id, text, engine }) {
       const full = canned[text.trim()] || (/[一-鿿]/.test(text) ? `(mock EN) ${text}` : `（模拟中文）${text}`);
       if ((engine || cfg.engine) === 'llm' && !cfg.llm.apiKeySet) return Promise.reject(new Error('还没填大模型的 API Key，去设置里填一下'));
@@ -49,6 +50,6 @@ if (!window.xt) {
       : { ok: true, sample: "I'm heading out, see you tomorrow!", ms: 420 },
     openSettings: () => console.log('[mock] openSettings'),
     onConfigChanged: (cb) => listeners.config.push(cb),
-  };
+  } });
   document.documentElement.style.background = '#8a93a3';
 }
