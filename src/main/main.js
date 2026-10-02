@@ -54,7 +54,7 @@ function warn(message) {
 // 页面里的外链（如"申请 Key"）一律交给系统浏览器，不在应用内开窗口
 function guardNavigation(win) {
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:///i.test(url)) shell.openExternal(url);
+    if (/^https?:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
   win.webContents.on('will-navigate', (event) => event.preventDefault());
