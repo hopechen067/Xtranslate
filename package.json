@@ -7,6 +7,41 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/"
+    "test": "node --test ./test/*.test.js",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "koffi": "3.3.2"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.xtranslate.app",
+    "productName": "Xtranslate",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json",
+      "!docs/**",
+      "!test/**"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Xtranslate"
+    }
   }
 }
