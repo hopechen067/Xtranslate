@@ -62,7 +62,7 @@ test('加密可用时落盘不含明文，读回后内存里有 Key，公开接�
   const pub = store.set({ llm: { apiKey: SECRET } });
   const disk = fs.readFileSync(file, 'utf8');
   assert.equal(disk.includes(SECRET), false);
-  assert.match(disk, /"deepseek": "enc:/);
+  assert.match(disk, /"zhipu": "enc:/);
   assert.equal(pub.llm.apiKeySet, true);
   assert.equal(JSON.stringify(pub).includes(SECRET), false);
   assert.equal(store.get().llm.apiKey, SECRET);

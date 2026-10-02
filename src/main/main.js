@@ -24,6 +24,7 @@ app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 const { PROVIDERS } = require('./providers');
+const { listModels } = require('./models');
 const { createConfigStore, mergeConfig } = require('./config');
 const { translate, warmup } = require('./engines');
 const { captureForeground, commitPaste } = require('./paste');
@@ -439,7 +440,10 @@ function registerIpc() {
 
   ipcMain.handle('xt:setConfig', (_event, partial) => setConfig(partial || {}));
 
-  ipcMain.handle('xt:getProviders', () => PROVIDERS);
+  // 渲染进程只需要展示用的字段，请求参数（extra）留在主进程
+  ipcMain.handle('xt:getProviders', () => PROVIDERS.map((p) => ({ ...p, models: p.models.map(({ extra, ...m }) => m) })));
+
+  ipcMain.handle('xt:listModels', (_event, providerId) => listModels(String(providerId || ''), { warn }));
 
   ipcMain.handle('xt:testEngine', async (_event, partial) => {
     const cfg = mergeConfig(store.get(), partial || {});

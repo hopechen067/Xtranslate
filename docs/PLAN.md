@@ -41,7 +41,7 @@
   "hotkey": "Alt+Q",
   "engine": "free",              // "free" | "llm"
   "free": { "provider": "microsoft" },   // "microsoft" | "google"
-  "llm": { "provider": "deepseek", "baseUrl": "https://api.deepseek.com", "model": "deepseek-chat", "apiKey": "<加密存储>" },
+  "llm": { "provider": "zhipu", "baseUrl": "https://open.bigmodel.cn/api/paas/v4", "model": "glm-4.7-flash", "apiKey": "<加密存储>" },
   "livePreview": true,
   "previewDelayMs": 500,
   "restoreClipboard": true,
@@ -62,7 +62,8 @@ API Key 用 Electron `safeStorage` 加密后存盘；永远不把明文 Key 发�
 | `onShow(cb)` | 浮窗被热键呼出时：`cb({engine, direction})` |
 | `getConfig()` → `Promise<config>` | apiKey 被替换为 `apiKeySet: boolean` |
 | `setConfig(partial)` → `Promise<config>` | 深合并；`llm.apiKey` 为空字符串/缺省表示不改；热键变更立即重新注册，失败则 reject 并保持旧热键 |
-| `getProviders()` → `Promise<Provider[]>` | 大模型预设列表 |
+| `getProviders()` → `Promise<Provider[]>` | 大模型预设列表；`models[]` 带 `free`（free / quota）和 `note`，请求参数 `extra` 只留在主进程 |
+| `listModels(providerId)` → `Promise<Model[]>` | 设置页模型下拉框：预设精选 + OpenRouter 实时免费模型（`live: true`），拉取失败只返回预设 |
 | `testEngine(partialConfig?)` → `Promise<{ok, sample, ms, error?}>` | 用当前或传入（未保存）配置翻译一句测试文本 |
 | `openSettings()` | 打开设置窗口 |
 | `onConfigChanged(cb)` | 配置变更广播给所有窗口 |

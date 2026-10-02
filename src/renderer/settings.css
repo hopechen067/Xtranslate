@@ -77,3 +77,4 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
   .row { flex-wrap: wrap; }
   .row > label { flex-basis: 100%; }
 }
+[hidden] { display: none !important; }

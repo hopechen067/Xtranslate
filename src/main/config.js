@@ -8,9 +8,9 @@ const DEFAULT_CONFIG = {
   engine: 'free',
   free: { provider: 'microsoft' },
   llm: {
-    provider: 'deepseek',
-    baseUrl: 'https://api.deepseek.com',
-    model: 'deepseek-chat',
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    model: 'glm-4.7-flash',
     apiKey: '',   // 当前服务商的 Key（仅内存，由 apiKeys 推出）
     apiKeys: {},  // 每个服务商各存一份，切换服务商时不会把 A 的 Key 发给 B
   },

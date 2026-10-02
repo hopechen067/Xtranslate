@@ -40,8 +40,9 @@ function userMessage(err, ctx = {}) {
   if (err.code === 'NO_KEY') return '还没填大模型的 API Key，去设置里填一下';
   if (err.code === 'NO_BASE_URL') return '还没填写大模型的接口地址';
   if (err.code === 'NO_MODEL') return '还没填写模型名';
-  if (err.code === 'REASONING_ONLY') return '这是推理模型，只顾着思考没给出译文。换成非推理模型（如 deepseek-chat）又快又稳';
+  if (err.code === 'REASONING_ONLY') return '这是推理模型，只顾着思考没给出译文。换成下拉框里标“推荐”的模型，已自动关闭思考，又快又稳';
   if (err.code === 'EMPTY') return '模型没有返回译文，换个模型试试';
+  if (err.code === 'FREE_BUSY') return '免费模型这会儿太忙（被上游限流），过一会儿再试，或在设置里换一个模型';
 
   const status = Number(err.status || err.statusCode || 0);
   const kind = ctx.kind || err.kind;

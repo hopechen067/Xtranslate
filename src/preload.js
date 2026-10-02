@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('xt', {
   getConfig: () => ipcRenderer.invoke('xt:getConfig'),
   setConfig: (partial) => ipcRenderer.invoke('xt:setConfig', partial),
   getProviders: () => ipcRenderer.invoke('xt:getProviders'),
+  listModels: (providerId) => ipcRenderer.invoke('xt:listModels', providerId),
   testEngine: (partial) => ipcRenderer.invoke('xt:testEngine', partial),
   openSettings: () => ipcRenderer.invoke('xt:openSettings'),
   onConfigChanged: (cb) => listen('xt:config', cb),

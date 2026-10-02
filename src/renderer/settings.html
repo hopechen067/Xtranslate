@@ -47,9 +47,12 @@
         <input id="llm-base" type="url" spellcheck="false" placeholder="https://…">
       </div>
       <div class="row">
-        <label for="llm-model">模型</label>
-        <input id="llm-model" list="llm-models" spellcheck="false" placeholder="模型名">
-        <datalist id="llm-models"></datalist>
+        <label for="llm-model-pick">模型</label>
+        <select id="llm-model-pick"></select>
+      </div>
+      <div class="row" id="llm-model-row">
+        <label for="llm-model" id="llm-model-label">模型名</label>
+        <input id="llm-model" spellcheck="false" placeholder="填写服务商提供的模型 ID">
       </div>
       <div class="row">
         <label for="llm-key">API Key</label>
