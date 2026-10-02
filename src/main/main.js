@@ -14,7 +14,14 @@ const {
   clipboard,
   safeStorage,
   shell,
+  nativeTheme,
 } = require('electron');
+
+// 界面只有两个小窗口，用不着 GPU：关掉硬件加速少一个 GPU 进程（约 50MB），
+// 也避开了反复开关窗口后合成器不出图、整窗白屏的问题。
+app.disableHardwareAcceleration();
+// Windows 的窗口遮挡检测会把刚显示的窗口误判为被遮挡而不绘制，同样导致白屏。
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 const { PROVIDERS } = require('./providers');
 const { createConfigStore, mergeConfig } = require('./config');
@@ -68,7 +75,25 @@ function webPrefs() {
     contextIsolation: true,
     nodeIntegration: false,
     sandbox: true,
+    spellcheck: false, // 默认开启会加载拼写词典，白占内存
   };
+}
+
+// 窗口底色与页面一致，页面还没画出来时也不会闪白
+function pageBackground() {
+  return nativeTheme.shouldUseDarkColors ? '#2a2d32' : '#f4f5f7';
+}
+
+// 渲染进程崩溃或卡死时自愈，而不是留一个白窗口
+function guardRenderer(win, onGone) {
+  win.webContents.on('render-process-gone', (_event, details) => {
+    warn(`${win.getTitle() || '窗口'} 渲染进程退出：${details && details.reason}`);
+    if (!win.isDestroyed()) onGone();
+  });
+  win.on('unresponsive', () => {
+    warn(`${win.getTitle() || '窗口'} 无响应，重新加载`);
+    if (!win.isDestroyed()) win.webContents.forcefullyCrashRenderer();
+  });
 }
 
 function pagePath(name) {
@@ -258,8 +283,8 @@ function setConfig(partial) {
   }
   if (partial && Object.prototype.hasOwnProperty.call(partial, 'launchAtLogin')) {
     applyLogin(!!store.get().launchAtLogin);
-  warmup(store.get());
   }
+  warmup(store.get());
   broadcast(pub);
   refreshTray();
   return pub;
@@ -267,27 +292,36 @@ function setConfig(partial) {
 
 function openSettings() {
   if (settingsWin && !settingsWin.isDestroyed()) {
+    // 还在加载就等 ready-to-show 自己弹出来，别提前把空窗口亮出来
+    if (settingsWin.webContents.isLoading()) return;
+    if (settingsWin.isMinimized()) settingsWin.restore();
     settingsWin.show();
     settingsWin.focus();
     return;
   }
-  settingsWin = new BrowserWindow({
+  // 关闭即销毁：设置页不常开，不值得常驻一个渲染进程
+  const win = new BrowserWindow({
     width: 640,
     height: 860,
     show: false,
     autoHideMenuBar: true,
     title: 'Xtranslate 设置',
+    backgroundColor: pageBackground(),
     webPreferences: webPrefs(),
   });
-  guardNavigation(settingsWin);
-  settingsWin.on('closed', () => {
-    settingsWin = null;
+  settingsWin = win;
+  guardNavigation(win);
+  guardRenderer(win, () => win.destroy());
+  win.once('ready-to-show', () => {
+    if (!win.isDestroyed()) {
+      win.show();
+      win.focus();
+    }
   });
-  loadPage(settingsWin, 'settings.html')
-    .then(() => {
-      if (settingsWin && !settingsWin.isDestroyed()) settingsWin.show();
-    })
-    .catch((err) => warn(err && err.message));
+  win.on('closed', () => {
+    if (settingsWin === win) settingsWin = null;
+  });
+  loadPage(win, 'settings.html').catch((err) => warn(err && err.message));
 }
 
 function createPopup() {
@@ -307,6 +341,13 @@ function createPopup() {
     webPreferences: webPrefs(),
   });
   guardNavigation(popup);
+  const self = popup;
+  guardRenderer(popup, () => {
+    // 浮窗是常驻的，坏了就整个重建
+    if (popup === self) popup = null;
+    self.destroy();
+    if (!quitting) createPopup();
+  });
   popup.setAlwaysOnTop(true, 'floating');
   popup.on('blur', () => {
     if (Date.now() < suppressBlurUntil) return;
@@ -453,6 +494,8 @@ async function start() {
 
 app.on('before-quit', () => {
   quitting = true;
+  for (const ac of inflight.values()) ac.abort(); // 别让未完成的请求拖住退出
+  inflight.clear();
 });
 
 app.on('will-quit', () => {
