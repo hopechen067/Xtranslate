@@ -1,6 +1,6 @@
 'use strict';
 
-const { getProvider } = require('../providers');
+const { getProvider, modelExtra, isFreeModel } = require('../providers');
 const { buildPrompt, cleanOutput } = require('../prompt');
 const { fetchWithTimeout, httpFail } = require('./http');
 const { fail } = require('../errors');
@@ -17,6 +17,13 @@ function joinUrl(base, path) {
 // 下限给足：推理模型会先花几百上千 token 思考，上限太小时译文部分会是空的
 function maxTokensFor(text) {
   return Math.min(8192, Math.max(2048, String(text).length * 4 + 256));
+}
+
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    if (signal) signal.addEventListener('abort', () => { clearTimeout(timer); reject(fail('CANCEL', {})); }, { once: true });
+  });
 }
 
 function hostOf(baseUrl) {
@@ -71,6 +78,7 @@ async function translateLLM(opts) {
     headers = { 'content-type': 'application/json' };
     if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
     body = {
+      ...modelExtra(llm.provider, model),
       model,
       temperature: prompt.temperature,
       max_tokens: maxTokens,
@@ -82,13 +90,21 @@ async function translateLLM(opts) {
     };
   }
 
-  const res = await fetchWithTimeout(url, {
+  const send = () => fetchWithTimeout(url, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
     signal: opts.signal,
   }, { timeoutMs, service, fetchImpl: opts.fetchImpl });
 
+  let res = await send();
+  // 免费模型被限流往往一两秒就恢复，自动再试一次
+  const free = isFreeModel(model);
+  if (res.status === 429 && free) {
+    await sleep(opts.retryDelayMs ?? 1000, opts.signal);
+    res = await send();
+  }
+  if (res.status === 429 && free) throw fail('FREE_BUSY', { service, kind: 'llm' });
   if (!res.ok) throw httpFail(res.status, service);
 
   let accumulated = '';

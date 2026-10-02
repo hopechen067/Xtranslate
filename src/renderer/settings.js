@@ -4,6 +4,9 @@ const $ = (id) => document.getElementById(id);
 const api = window.xt; // 不能叫 xt：contextBridge 已把 xt 定义为不可重声明的全局
 let providers = [];
 let cfg = null;
+const liveModels = {}; // 服务商 id → 联网拿到的完整模型列表（目前只有 OpenRouter 会多出实时免费模型）
+const CUSTOM = '__custom__';
+let customModel = false; // 用户在下拉框里选了"自定义模型…"
 
 const errMsg = (e) => (e && e.message ? e.message : String(e)).replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
 
@@ -34,15 +37,15 @@ function render() {
   if (document.activeElement !== $('llm-base')) $('llm-base').value = llm.baseUrl || '';
   if (document.activeElement !== $('llm-model')) $('llm-model').value = llm.model || '';
   const p = providers.find((x) => x.id === llm.provider) || {};
-  $('llm-models').replaceChildren(...(p.models || []).map((m) => Object.assign(document.createElement('option'), { value: m })));
+  renderModels(p, llm.model || '');
   $('llm-key').placeholder = llm.apiKeySet ? '已保存（留空则不修改）' : (p.keyOptional ? '本地模型可不填' : 'sk-…');
 
   const tip = $('key-tip');
   tip.replaceChildren();
   if (p.keyUrl) {
-    const a = Object.assign(document.createElement('a'), { href: p.keyUrl, target: '_blank', textContent: `去 ${p.name} 申请 Key` });
-    tip.append(a, '　Key 只加密保存在本机，只发给你选的服务商。', document.createElement('br'),
-      '建议用非推理模型（如 deepseek-chat、qwen-plus、glm-4-flash），推理模型要先思考，出译文慢很多。');
+    const a = Object.assign(document.createElement('a'), { href: p.keyUrl, target: '_blank', textContent: `去 ${p.name.split(' · ')[0]} 申请 Key` });
+    tip.append(a, '　Key 只加密保存在本机，只发给你选的服务商。');
+    if (p.note) tip.append(document.createElement('br'), p.note + '。');
   } else if (p.id === 'ollama') {
     tip.textContent = '需先在本机运行 Ollama 并拉取模型，例如 ollama pull qwen2.5:7b';
   }
@@ -54,6 +57,49 @@ function render() {
   $('delay').disabled = !$('live').checked;
   $('restore').checked = cfg.restoreClipboard !== false;
   $('login').checked = !!cfg.launchAtLogin;
+}
+
+function modelLabel(m) {
+  const tags = [];
+  if (m.free === 'free') tags.push('免费');
+  if (m.free === 'quota') tags.push('新用户免费额度');
+  if (m.note) tags.push(m.note);
+  return tags.length ? `${m.id}（${tags.join(' · ')}）` : m.id;
+}
+
+function option(value, text) {
+  return Object.assign(document.createElement('option'), { value, textContent: text });
+}
+
+// 下拉框：精选模型 → 实时免费模型 → 自定义；当前模型不在列表里就落到"自定义"
+function renderModels(p, model) {
+  const list = liveModels[p.id] || p.models || [];
+  const pick = $('llm-model-pick');
+  const curated = list.filter((m) => !m.live);
+  const live = list.filter((m) => m.live);
+  const children = curated.map((m) => option(m.id, modelLabel(m)));
+  if (live.length) {
+    const group = Object.assign(document.createElement('optgroup'), { label: '更多免费模型（实时）' });
+    group.append(...live.map((m) => option(m.id, modelLabel(m))));
+    children.push(group);
+  }
+  children.push(option(CUSTOM, '自定义模型…'));
+  pick.replaceChildren(...children);
+
+  const known = list.some((m) => m.id === model);
+  const custom = !list.length || customModel || !known;
+  pick.value = custom ? CUSTOM : model;
+  $('llm-model-pick').closest('.row').hidden = !list.length;
+  $('llm-model-row').hidden = !custom;
+  $('llm-model-label').textContent = list.length ? '模型名' : '模型';
+}
+
+async function loadModels(id) {
+  try {
+    const list = await api.listModels(id);
+    if (Array.isArray(list) && list.length) liveModels[id] = list;
+    render();
+  } catch { /* 拉不到就只用预设 */ }
 }
 
 // —— 引擎 ——
@@ -68,7 +114,21 @@ $('llm-provider').addEventListener('change', (e) => {
   const llm = { provider: p.id };
   if (p.id !== 'custom') Object.assign(llm, { baseUrl: p.baseUrl, model: p.model });
   setResult($('llm-result'), '');
+  customModel = false;
   save({ llm });
+  if (!liveModels[p.id]) loadModels(p.id);
+});
+$('llm-model-pick').addEventListener('change', (e) => {
+  if (e.target.value === CUSTOM) {
+    customModel = true;
+    render();
+    $('llm-model').focus();
+    $('llm-model').select();
+    return;
+  }
+  customModel = false;
+  setResult($('llm-result'), '');
+  save({ llm: { model: e.target.value } });
 });
 $('llm-base').addEventListener('change', (e) => save({ llm: { baseUrl: e.target.value.trim() } }));
 $('llm-model').addEventListener('change', (e) => save({ llm: { model: e.target.value.trim() } }));
@@ -168,4 +228,5 @@ api.onConfigChanged((c) => { cfg = c; render(); });
   $('llm-provider').replaceChildren(...providers.map((p) => Object.assign(document.createElement('option'), { value: p.id, textContent: p.name })));
   cfg = await api.getConfig();
   render();
+  loadModels(cfg.llm?.provider || 'zhipu');
 })();

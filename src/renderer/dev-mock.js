@@ -4,7 +4,7 @@ if (!window.xt) {
   const listeners = { partial: [], show: [], config: [] };
   let cfg = {
     hotkey: 'Alt+Q', engine: 'free', free: { provider: 'microsoft' },
-    llm: { provider: 'deepseek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat', apiKeySet: false },
+    llm: { provider: 'zhipu', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4.7-flash', apiKeySet: false },
     livePreview: true, previewDelayMs: 500, restoreClipboard: true, launchAtLogin: false,
   };
   const canned = { '我先撤了哈，明天见': "I'm heading out, see you tomorrow!", 'No worries, take your time!': '没事没事，你慢慢来！' };
@@ -40,11 +40,14 @@ if (!window.xt) {
       return structuredClone(cfg);
     },
     getProviders: async () => [
-      { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat', models: ['deepseek-chat'], keyUrl: 'https://platform.deepseek.com/api_keys' },
-      { id: 'anthropic', name: 'Claude（Anthropic）', baseUrl: 'https://api.anthropic.com', model: 'claude-haiku-4-5', models: ['claude-haiku-4-5', 'claude-sonnet-5-5'], keyUrl: 'https://console.anthropic.com/settings/keys' },
+      { id: 'zhipu', name: '智谱 GLM · 免费', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4.7-flash', note: '国内直连，长期免费', keyUrl: 'https://open.bigmodel.cn/usercenter/apikeys', models: [{ id: 'glm-4.7-flash', free: 'free', note: '推荐' }, { id: 'glm-4-flash-250414', free: 'free' }] },
+      { id: 'openrouter', name: 'OpenRouter · 有免费模型', baseUrl: 'https://openrouter.ai/api/v1', model: 'google/gemma-4-31b-it:free', keyUrl: 'https://openrouter.ai/keys', models: [{ id: 'google/gemma-4-31b-it:free', free: 'free', note: '推荐' }, { id: 'deepseek/deepseek-chat' }] },
       { id: 'ollama', name: 'Ollama（本地）', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5:7b', models: [], keyOptional: true },
       { id: 'custom', name: '自定义（OpenAI 兼容）', baseUrl: '', model: '', models: [] },
     ],
+    listModels: async (id) => id === 'openrouter'
+      ? [{ id: 'google/gemma-4-31b-it:free', free: 'free', note: '推荐' }, { id: 'deepseek/deepseek-chat' }, { id: 'qwen/qwen3.8-27b:free', free: 'free', live: true }]
+      : [],
     testEngine: async ({ engine }) => engine === 'llm' && !cfg.llm.apiKeySet
       ? { ok: false, error: '还没填大模型的 API Key，去设置里填一下' }
       : { ok: true, sample: "I'm heading out, see you tomorrow!", ms: 420 },
