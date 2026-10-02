@@ -41,7 +41,8 @@ function render() {
   tip.replaceChildren();
   if (p.keyUrl) {
     const a = Object.assign(document.createElement('a'), { href: p.keyUrl, target: '_blank', textContent: `去 ${p.name} 申请 Key` });
-    tip.append(a, '　Key 只加密保存在本机，只发给你选的服务商。');
+    tip.append(a, '　Key 只加密保存在本机，只发给你选的服务商。', document.createElement('br'),
+      '建议用非推理模型（如 deepseek-chat、qwen-plus、glm-4-flash），推理模型要先思考，出译文慢很多。');
   } else if (p.id === 'ollama') {
     tip.textContent = '需先在本机运行 Ollama 并拉取模型，例如 ollama pull qwen2.5:7b';
   }
