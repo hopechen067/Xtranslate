@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <title>Xtranslate 设置</title>
+  <style>
+    body { margin: 0; padding: 20px; font: 14px/1.5 sans-serif; background: #161616; color: #f3f3f3; }
+    pre { white-space: pre-wrap; color: #cde; }
+    button { margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Xtranslate 设置（fixture）</h1>
+  <p>这是后端自测页。正式界面在 src/renderer/settings.html。</p>
+  <button id="reload" type="button">读取配置</button>
+  <pre id="out">等待 preload…</pre>
+  <script>
+    const out = document.getElementById('out');
+    async function show() {
+      if (!window.xt) {
+        out.textContent = 'preload 没有挂上 window.xt';
+        return;
+      }
+      const config = await window.xt.getConfig();
+      out.textContent = JSON.stringify(config, null, 2);
+    }
+    document.getElementById('reload').addEventListener('click', () => {
+      show().catch((err) => { out.textContent = err.message; });
+    });
+    if (window.xt) window.xt.onConfigChanged(() => { show(); });
+    show().catch((err) => { out.textContent = err.message; });
+  </script>
+</body>
+</html>
