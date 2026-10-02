@@ -20,6 +20,7 @@ const { PROVIDERS } = require('./providers');
 const { createConfigStore, mergeConfig } = require('./config');
 const { translate, warmup } = require('./engines');
 const { captureForeground, commitPaste } = require('./paste');
+const { getCaretRect, computePopupPosition, DEFAULT_RESERVE } = require('./caret');
 
 const POPUP_WIDTH = 560;
 const POPUP_HEIGHT = 140;
@@ -32,6 +33,7 @@ let quitting = false;
 let activeHotkey = null;
 let targetHwnd = null;
 let suppressBlurUntil = 0;
+let popupAbove = false;
 const inflight = new Map();
 
 const gotLock = app.requestSingleInstanceLock();
@@ -117,15 +119,39 @@ function trayImage() {
   ));
 }
 
-function placePopup() {
+function popupAnchor() {
+  const caret = getCaretRect(targetHwnd);
+  if (caret && process.platform === 'win32' && typeof screen.screenToDipRect === 'function') {
+    try {
+      const dip = screen.screenToDipRect(null, caret);
+      if (dip && Number.isFinite(dip.x) && Number.isFinite(dip.y)) {
+        return {
+          x: dip.x,
+          y: dip.y,
+          width: dip.width || 0,
+          height: dip.height || 0,
+        };
+      }
+    } catch (err) {
+      warn(`光标坐标换算失败：${err && err.message}`);
+    }
+  }
   const cursor = screen.getCursorScreenPoint();
-  const display = screen.getDisplayNearestPoint(cursor);
-  const area = display.workArea;
+  return { x: cursor.x, y: cursor.y, width: 0, height: 0 };
+}
+
+function placePopup() {
+  const anchor = popupAnchor();
+  const display = screen.getDisplayNearestPoint({ x: anchor.x, y: anchor.y });
   const [width, height] = popup.getSize();
-  const x = Math.round(area.x + (area.width - width) / 2);
-  const y = Math.round(area.y + area.height * 0.28);
-  const maxY = area.y + area.height - height;
-  popup.setPosition(x, Math.min(y, maxY));
+  const pos = computePopupPosition({
+    anchor,
+    size: { width, height },
+    workArea: display.workArea,
+    reserve: DEFAULT_RESERVE,
+  });
+  popupAbove = pos.above;
+  popup.setPosition(pos.x, pos.y);
 }
 
 function emitShow() {
@@ -359,6 +385,12 @@ function registerIpc() {
   ipcMain.handle('xt:resize', (_event, height) => {
     if (!popup || popup.isDestroyed()) return;
     const next = Math.max(80, Math.min(800, Math.round(Number(height) || POPUP_HEIGHT)));
+    if (popupAbove) {
+      const [, current] = popup.getSize();
+      const [x, y] = popup.getPosition();
+      popup.setBounds({ x, y: y + current - next, width: POPUP_WIDTH, height: next });
+      return;
+    }
     popup.setSize(POPUP_WIDTH, next);
   });
 

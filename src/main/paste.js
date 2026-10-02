@@ -1,5 +1,7 @@
 'use strict';
 
+const { loadWin32 } = require('./win32');
+
 const INPUT_KEYBOARD = 1;
 const KEYEVENTF_KEYUP = 0x0002;
 const VK_CONTROL = 0x11;
@@ -40,58 +42,6 @@ function writeSnapshot(clipboard, snap) {
     return;
   }
   clipboard.write(payload);
-}
-
-let win32 = null;
-
-function loadWin32() {
-  if (win32) return win32;
-  if (process.platform !== 'win32') return null;
-  const koffi = require('koffi');
-  const user32 = koffi.load('user32.dll');
-  const kernel32 = koffi.load('kernel32.dll');
-
-  const KEYBDINPUT = koffi.struct('KEYBDINPUT', {
-    wVk: 'uint16_t',
-    wScan: 'uint16_t',
-    dwFlags: 'uint32_t',
-    time: 'uint32_t',
-    dwExtraInfo: 'uintptr_t',
-  });
-  const MOUSEINPUT = koffi.struct('MOUSEINPUT', {
-    dx: 'long',
-    dy: 'long',
-    mouseData: 'uint32_t',
-    dwFlags: 'uint32_t',
-    time: 'uint32_t',
-    dwExtraInfo: 'uintptr_t',
-  });
-  const HARDWAREINPUT = koffi.struct('HARDWAREINPUT', {
-    uMsg: 'uint32_t',
-    wParamL: 'uint16_t',
-    wParamH: 'uint16_t',
-  });
-  const INPUT = koffi.struct('INPUT', {
-    type: 'uint32_t',
-    u: koffi.union({
-      mi: MOUSEINPUT,
-      ki: KEYBDINPUT,
-      hi: HARDWAREINPUT,
-    }),
-  });
-
-  win32 = {
-    koffi,
-    INPUT,
-    GetForegroundWindow: user32.func('void * __stdcall GetForegroundWindow()'),
-    SetForegroundWindow: user32.func('bool __stdcall SetForegroundWindow(void *hWnd)'),
-    AllowSetForegroundWindow: user32.func('bool __stdcall AllowSetForegroundWindow(uint32_t dwProcessId)'),
-    GetWindowThreadProcessId: user32.func('uint32_t __stdcall GetWindowThreadProcessId(void *hWnd, _Out_ uint32_t *lpdwProcessId)'),
-    AttachThreadInput: user32.func('bool __stdcall AttachThreadInput(uint32_t idAttach, uint32_t idAttachTo, bool fAttach)'),
-    GetCurrentThreadId: kernel32.func('uint32_t __stdcall GetCurrentThreadId()'),
-    SendInput: user32.func('unsigned int __stdcall SendInput(unsigned int cInputs, INPUT *pInputs, int cbSize)'),
-  };
-  return win32;
 }
 
 function captureForeground() {
