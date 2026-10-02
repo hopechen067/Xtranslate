@@ -1,7 +1,7 @@
 {
   "name": "xtranslate",
   "productName": "Xtranslate",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "中英互译输入法：热键呼出，打字即译，口语化",
   "main": "src/main/main.js",
   "private": true,
