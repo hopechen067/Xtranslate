@@ -42,6 +42,10 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Xtranslate"
-    }
+    },
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ]
   }
 }
