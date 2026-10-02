@@ -11,7 +11,8 @@ const DEFAULT_CONFIG = {
     provider: 'deepseek',
     baseUrl: 'https://api.deepseek.com',
     model: 'deepseek-chat',
-    apiKey: '',
+    apiKey: '',   // 当前服务商的 Key（仅内存，由 apiKeys 推出）
+    apiKeys: {},  // 每个服务商各存一份，切换服务商时不会把 A 的 Key 发给 B
   },
   livePreview: true,
   previewDelayMs: 500,
@@ -44,7 +45,21 @@ function deepMerge(base, patch) {
 }
 
 function applyDefaults(config) {
-  return deepMerge(DEFAULT_CONFIG, config || {});
+  const out = deepMerge(DEFAULT_CONFIG, config || {});
+  out.llm.apiKey = (out.llm.apiKeys && out.llm.apiKeys[out.llm.provider]) || '';
+  return out;
+}
+
+/** 合并配置；llm.apiKey 非空时写进"合并后服务商"那一格。 */
+function mergeConfig(base, partial) {
+  const p = clone(partial || {});
+  const newKey = p.llm && p.llm.apiKey;
+  if (p.llm) delete p.llm.apiKey;
+  const next = deepMerge(base, p);
+  if (typeof newKey === 'string' && newKey) {
+    next.llm.apiKeys = { ...(next.llm.apiKeys || {}), [next.llm.provider]: newKey };
+  }
+  return applyDefaults(next);
 }
 
 /** 给渲染进程的配置：没有明文 Key，只有 apiKeySet。 */
@@ -53,6 +68,7 @@ function toPublicConfig(config) {
   const key = pub.llm && pub.llm.apiKey;
   pub.llm.apiKeySet = typeof key === 'string' && key.length > 0;
   delete pub.llm.apiKey;
+  delete pub.llm.apiKeys;
   return pub;
 }
 
@@ -101,7 +117,11 @@ function createConfigStore({ filePath, safeStorage, warn }) {
 
   function persist(config) {
     const disk = clone(config);
-    disk.llm.apiKey = sealApiKey(config.llm.apiKey, safeStorage, warn, state);
+    delete disk.llm.apiKey;
+    disk.llm.apiKeys = {};
+    for (const [id, key] of Object.entries(config.llm.apiKeys || {})) {
+      if (key) disk.llm.apiKeys[id] = sealApiKey(key, safeStorage, warn, state);
+    }
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     const tmp = `${filePath}.${process.pid}.tmp`;
     fs.writeFileSync(tmp, `${JSON.stringify(disk, null, 2)}\n`, 'utf8');
@@ -116,17 +136,26 @@ function createConfigStore({ filePath, safeStorage, warn }) {
       if (err && err.code !== 'ENOENT' && warn) warn('配置文件读不了，已改用默认配置');
       disk = null;
     }
-    const next = applyDefaults(disk);
-    const storedKey = disk && disk.llm && disk.llm.apiKey;
-    next.llm.apiKey = openApiKey(storedKey, safeStorage, warn);
-    if (storedKey && String(storedKey).startsWith('plain:') && !encryptionAvailable(safeStorage) && warn && !state.warnedPlain) {
-      state.warnedPlain = true;
-      warn('safeStorage 不可用，API Key 将以明文保存');
+    const stored = { ...((disk && disk.llm && disk.llm.apiKeys) || {}) };
+    // 旧格式：单个 llm.apiKey 归到当时的服务商
+    const legacy = disk && disk.llm && disk.llm.apiKey;
+    if (legacy && !stored[disk.llm.provider || DEFAULT_CONFIG.llm.provider]) {
+      stored[disk.llm.provider || DEFAULT_CONFIG.llm.provider] = legacy;
     }
-    current = next;
-    if (storedKey && !String(storedKey).startsWith('enc:') && next.llm.apiKey && encryptionAvailable(safeStorage)) {
-      persist(current);
+    const keys = {};
+    let needsReseal = !!legacy;
+    for (const [id, sealed] of Object.entries(stored)) {
+      const plain = openApiKey(sealed, safeStorage, warn);
+      if (plain) keys[id] = plain;
+      if (String(sealed).startsWith('plain:') && !encryptionAvailable(safeStorage) && warn && !state.warnedPlain) {
+        state.warnedPlain = true;
+        warn('safeStorage 不可用，API Key 将以明文保存');
+      }
+      if (!String(sealed).startsWith('enc:') && plain && encryptionAvailable(safeStorage)) needsReseal = true;
     }
+    if (disk && disk.llm) { delete disk.llm.apiKey; delete disk.llm.apiKeys; }
+    current = mergeConfig(applyDefaults(disk), { llm: { apiKeys: keys } });
+    if (needsReseal && Object.keys(keys).length) persist(current);
   }
 
   function get() {
@@ -138,7 +167,7 @@ function createConfigStore({ filePath, safeStorage, warn }) {
   }
 
   function set(partial) {
-    const next = applyDefaults(deepMerge(current, partial || {}));
+    const next = mergeConfig(current, partial);
     persist(next);
     current = next;
     return getPublic();
@@ -151,6 +180,7 @@ function createConfigStore({ filePath, safeStorage, warn }) {
 module.exports = {
   DEFAULT_CONFIG,
   deepMerge,
+  mergeConfig,
   applyDefaults,
   toPublicConfig,
   sealApiKey,

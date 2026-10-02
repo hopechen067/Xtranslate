@@ -4,7 +4,7 @@ const INPUT_KEYBOARD = 1;
 const KEYEVENTF_KEYUP = 0x0002;
 const VK_CONTROL = 0x11;
 const VK_V = 0x56;
-const VK_MENU = 0x12;
+const VK_F24 = 0x87; // 几乎没有软件响应，用来解前台锁而不触发菜单栏
 const ASFW_ANY = 0xffffffff;
 
 const PASTE_DELAY_MS = 60;
@@ -124,8 +124,19 @@ function sendInputs(api, events) {
   return api.SendInput(events.length, events, api.koffi.sizeof(api.INPUT));
 }
 
+function sameWindow(api, a, b) {
+  try {
+    return !!a && !!b && api.koffi.address(a) === api.koffi.address(b);
+  } catch {
+    return false;
+  }
+}
+
 function forceForeground(api, hwnd) {
   if (!hwnd) return false;
+  // 浮窗隐藏后 Windows 通常已把焦点还给原窗口，这时什么都不做，
+  // 避免任何模拟按键落进目标程序（单按 Alt 会激活记事本/Office 的菜单栏，吞掉 Ctrl+V）
+  if (sameWindow(api, api.GetForegroundWindow(), hwnd)) return true;
   try {
     api.AllowSetForegroundWindow(ASFW_ANY);
   } catch {
@@ -157,8 +168,8 @@ function forceForeground(api, hwnd) {
   try {
     attach(foregroundThread, currentThread);
     attach(targetThread, currentThread);
-    // 模拟一次 Alt，解开 Windows 的前台锁，否则 SetForegroundWindow 经常被拒绝。
-    sendInputs(api, [keyEvent(VK_MENU, true), keyEvent(VK_MENU, false)]);
+    // 本进程刚产生过输入，Windows 才允许它切换前台；用 F24 而不是 Alt，免得激活菜单栏
+    sendInputs(api, [keyEvent(VK_F24, true), keyEvent(VK_F24, false)]);
     return !!api.SetForegroundWindow(hwnd);
   } finally {
     for (const [from, to] of attached.reverse()) {

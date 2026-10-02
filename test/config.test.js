@@ -41,12 +41,13 @@ test('深合并保留未出现的字段，空 apiKey 不覆盖', () => {
 });
 
 test('公开配置只有 apiKeySet，序列化结果里没有明文 Key', () => {
-  const pub = toPublicConfig({ llm: { apiKey: SECRET, model: 'm' } });
+  const pub = toPublicConfig({ llm: { provider: 'deepseek', apiKeys: { deepseek: SECRET }, model: 'm' } });
   assert.equal(pub.llm.apiKeySet, true);
   assert.equal('apiKey' in pub.llm, false);
+  assert.equal('apiKeys' in pub.llm, false);
   assert.equal(JSON.stringify(pub).includes(SECRET), false);
 
-  const empty = toPublicConfig({ llm: { apiKey: '' } });
+  const empty = toPublicConfig({ llm: { provider: 'qwen', apiKeys: { deepseek: SECRET } } });
   assert.equal(empty.llm.apiKeySet, false);
 });
 
@@ -61,7 +62,7 @@ test('加密可用时落盘不含明文，读回后内存里有 Key，公开接�
   const pub = store.set({ llm: { apiKey: SECRET } });
   const disk = fs.readFileSync(file, 'utf8');
   assert.equal(disk.includes(SECRET), false);
-  assert.match(disk, /"apiKey": "enc:/);
+  assert.match(disk, /"deepseek": "enc:/);
   assert.equal(pub.llm.apiKeySet, true);
   assert.equal(JSON.stringify(pub).includes(SECRET), false);
   assert.equal(store.get().llm.apiKey, SECRET);
@@ -95,4 +96,33 @@ test('加密不可用时降级明文并警告一次', () => {
   assert.equal(warnings.length, 1);
   assert.equal(store.getPublic().llm.apiKeySet, true);
   assert.equal(JSON.stringify(store.getPublic()).includes(SECRET), false);
+});
+
+test('每个服务商各存一份 Key，切换服务商不会带走别家的 Key', () => {
+  const file = tmpFile();
+  const store = createConfigStore({ filePath: file, safeStorage: xorStorage(true), warn: () => {} });
+  store.set({ llm: { provider: 'deepseek', apiKey: SECRET } });
+  let pub = store.set({ llm: { provider: 'anthropic', baseUrl: 'https://api.anthropic.com' } });
+  assert.equal(pub.llm.apiKeySet, false);
+  assert.equal(store.get().llm.apiKey, '');
+  store.set({ llm: { apiKey: 'sk-ant-other' } });
+  assert.equal(store.get().llm.apiKey, 'sk-ant-other');
+  pub = store.set({ llm: { provider: 'deepseek' } });
+  assert.equal(pub.llm.apiKeySet, true);
+  assert.equal(store.get().llm.apiKey, SECRET);
+  const reloaded = createConfigStore({ filePath: file, safeStorage: xorStorage(true), warn: () => {} });
+  assert.equal(reloaded.get().llm.apiKey, SECRET);
+  assert.equal(reloaded.get().llm.apiKeys.anthropic, 'sk-ant-other');
+});
+
+test('旧格式单个 apiKey 迁移到当时的服务商并重新加密', () => {
+  const file = tmpFile();
+  fs.mkdirSync(require('path').dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ llm: { provider: 'qwen', apiKey: 'plain:' + SECRET } }));
+  const store = createConfigStore({ filePath: file, safeStorage: xorStorage(true), warn: () => {} });
+  assert.equal(store.get().llm.apiKey, SECRET);
+  const disk = fs.readFileSync(file, 'utf8');
+  assert.equal(disk.includes(SECRET), false);
+  assert.match(disk, /"qwen": "enc:/);
+  assert.equal(/"apiKey"/.test(disk), false);
 });

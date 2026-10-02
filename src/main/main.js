@@ -13,10 +13,11 @@ const {
   screen,
   clipboard,
   safeStorage,
+  shell,
 } = require('electron');
 
 const { PROVIDERS } = require('./providers');
-const { createConfigStore, deepMerge } = require('./config');
+const { createConfigStore, mergeConfig } = require('./config');
 const { translate } = require('./engines');
 const { captureForeground, commitPaste } = require('./paste');
 
@@ -48,6 +49,15 @@ if (!gotLock) {
 
 function warn(message) {
   console.warn('[xtranslate]', message);
+}
+
+// 页面里的外链（如"申请 Key"）一律交给系统浏览器，不在应用内开窗口
+function guardNavigation(win) {
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:///i.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (event) => event.preventDefault());
 }
 
 function webPrefs() {
@@ -206,7 +216,7 @@ function refreshTray() {
 
 function setConfig(partial) {
   const prev = store.get();
-  const merged = deepMerge(prev, partial || {});
+  const merged = mergeConfig(prev, partial || {});
   const hotkeyChanged = merged.hotkey !== prev.hotkey;
   if (hotkeyChanged) {
     const registered = applyHotkey(merged.hotkey);
@@ -234,13 +244,14 @@ function openSettings() {
     return;
   }
   settingsWin = new BrowserWindow({
-    width: 760,
-    height: 680,
+    width: 640,
+    height: 860,
     show: false,
     autoHideMenuBar: true,
     title: 'Xtranslate 设置',
     webPreferences: webPrefs(),
   });
+  guardNavigation(settingsWin);
   settingsWin.on('closed', () => {
     settingsWin = null;
   });
@@ -267,6 +278,7 @@ function createPopup() {
     fullscreenable: false,
     webPreferences: webPrefs(),
   });
+  guardNavigation(popup);
   popup.setAlwaysOnTop(true, 'floating');
   popup.on('blur', () => {
     if (Date.now() < suppressBlurUntil) return;
@@ -283,7 +295,8 @@ function createPopup() {
 
 function createTray() {
   tray = new Tray(trayImage());
-  tray.setToolTip('Xtranslate');
+  tray.setToolTip(`Xtranslate · ${store.get().hotkey} 呼出`);
+  tray.on('click', () => openSettings());
   refreshTray();
 }
 
@@ -354,7 +367,7 @@ function registerIpc() {
   ipcMain.handle('xt:getProviders', () => PROVIDERS);
 
   ipcMain.handle('xt:testEngine', async (_event, partial) => {
-    const cfg = deepMerge(store.get(), partial || {});
+    const cfg = mergeConfig(store.get(), partial || {});
     const started = Date.now();
     try {
       const result = await translate({
