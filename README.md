@@ -1,3 +1,5 @@
+<p align="right"><b>简体中文</b> | <a href="README.en.md">English</a></p>
+
 # Xtranslate
 
 **中英互译输入法**：在任意软件里按热键，弹出小输入框，打中文出英文、打英文出中文，回车把译文直接粘贴回原来的光标位置。
@@ -5,6 +7,8 @@
 译文追求**口语化**——像日常说话，而不是书面翻译腔。
 
 > 平台：Windows 10/11　·　技术栈：Electron + 纯 HTML/JS　·　协议：MIT
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/popup-dark.png"><img src="docs/images/popup-light.png" alt="热键呼出的翻译浮窗" width="560"></picture></p>
 
 ## 特性
 
@@ -55,7 +59,7 @@ npm run dist
 | 按键 | 作用 |
 |---|---|
 | `Alt+Q` | 呼出输入框（可在设置里改） |
-| `Enter` | 粘贴译文并关闭（译文还没出来会等它出来） |
+| `Enter` | 上屏：粘贴译文并关闭（译文还没出来会等它出来） |
 | `Shift+Enter` | 输入框内换行 |
 | `Tab` | 切换方向：自动 → 中→英 → 英→中 |
 | `Ctrl+E` | 切换引擎：免费 ↔ 大模型 |
@@ -64,6 +68,8 @@ npm run dist
 ### 3. 打开设置
 
 右键托盘图标 → **设置**。可以修改热键、引擎、预览延迟，以及设置开机启动。
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-free-dark.png"><img src="docs/images/settings-free-light.png" alt="设置页：免费引擎" width="420"></picture></p>
 
 ### 4. 使用免费引擎（零配置）
 
@@ -77,6 +83,8 @@ npm run dist
 1. 设置 → 引擎选择「大模型」，选一个服务商（带「免费」标记的可白嫖）。
 2. 打开对应官网（设置里有链接），注册并创建 API Key。
 3. 把 Key 粘贴进设置，选择模型。
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-llm-dark.png"><img src="docs/images/settings-llm-light.png" alt="设置页：大模型" width="420"></picture></p>
+
 4. 点击「保存并测试」，翻译一句示例，成功即可。
 
 推荐入门：
