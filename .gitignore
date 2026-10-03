@@ -2,3 +2,9 @@ node_modules/
 dist/
 *.log
 .cache/
+promo/out/
+promo/audio/vo/err.txt
+promo/assets/rec.mp4
+promo/
+.claude/
+release/
