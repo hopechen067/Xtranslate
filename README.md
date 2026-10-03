@@ -17,7 +17,7 @@
 - 回车即粘贴回原窗口光标处，并自动恢复你原来的剪贴板
 - 自动识别方向（中→英 / 英→中），也可手动切换
 - 两类引擎：
-  - **免费（无需 Key）**：微软（国内直连，默认）、Google（国内需代理）
+  - **免费（无需 Key）**：微软（国内直连，默认）、Google（国内需代理）、腾讯（最快，质量一般）
   - **大模型（自带 Key）**：智谱 GLM、硅基流动、Gemini、Groq、Cerebras、OpenRouter、通义千问、DeepSeek、Kimi、Claude、OpenAI，或任意兼容 OpenAI 协议的服务
 - API Key 使用系统 `safeStorage` 加密保存，不会发给界面进程
 
@@ -80,7 +80,7 @@ npm run dist
 
 ### 5. 配置大模型（口语化更好）
 
-1. 设置 → 引擎选择「大模型」，选一个服务商（带「免费」标记的可白嫖）。
+1. 设置 → 引擎选择「大模型 · 口语」，选一个服务商（带「免费」标记的可白嫖）。
 2. 打开对应官网（设置里有链接），注册并创建 API Key。
 3. 把 Key 粘贴进设置，选择模型。
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-llm-dark.png"><img src="docs/images/settings-llm-light.png" alt="设置页：大模型" width="420"></picture></p>
