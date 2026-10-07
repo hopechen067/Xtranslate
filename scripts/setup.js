@@ -39,7 +39,7 @@ console.log('[setup] npm install');
 run('npm', ['install']);
 
 console.log('[setup] building Windows portable exe');
-run('npx', ['electron-builder', '--win', 'portable', '--x64']);
+run('npx', ['electron-builder', '--win', 'portable', '--x64', '--publish', 'never']);
 
 const exe = findPortableExe();
 if (!exe) {

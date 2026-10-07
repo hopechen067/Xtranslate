@@ -43,7 +43,8 @@ jobs:
         run: npm test
 
       - name: Build Windows packages
-        run: npx electron-builder --win nsis portable --x64
+        # A git tag makes electron-builder try to publish unless this is never.
+        run: npx electron-builder --win nsis portable --x64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 

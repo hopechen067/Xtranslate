@@ -9,8 +9,8 @@
     "start": "electron .",
     "test": "node --test ./test/*.test.js",
     "setup": "node scripts/setup.js",
-    "dist": "electron-builder --win nsis portable --x64",
-    "dist:portable": "electron-builder --win portable --x64"
+    "dist": "electron-builder --win nsis portable --x64 --publish never",
+    "dist:portable": "electron-builder --win portable --x64 --publish never"
   },
   "dependencies": {
     "koffi": "3.3.2"
