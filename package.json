@@ -8,7 +8,9 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test ./test/*.test.js",
-    "dist": "electron-builder"
+    "setup": "node scripts/setup.js",
+    "dist": "electron-builder --win nsis portable --x64",
+    "dist:portable": "electron-builder --win portable --x64"
   },
   "dependencies": {
     "koffi": "3.3.2"
@@ -40,8 +42,14 @@
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "Xtranslate"
+      "shortcutName": "Xtranslate",
+      "artifactName": "Xtranslate-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "Xtranslate-portable.${ext}",
+      "requestExecutionLevel": "user"
     },
     "electronLanguages": [
       "zh-CN",

@@ -1,0 +1,120 @@
+# Build Windows NSIS + portable on v* tags (and manual dispatch),
+# then publish GitHub Release assets with stable names:
+#   Xtranslate-portable.exe  — used by scripts/install.ps1
+#   Xtranslate-Setup.exe     — NSIS wizard
+#   SHA256SUMS.txt
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (default: v + version in package.json)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-windows
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build Windows packages
+        run: npx electron-builder --win nsis portable --x64
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = node -p "require('./package.json').version"
+          $dist = Join-Path (Get-Location) 'dist'
+
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $tag = $env:GITHUB_REF_NAME
+          } elseif (-not [string]::IsNullOrWhiteSpace($env:INPUT_TAG)) {
+            $tag = $env:INPUT_TAG.Trim()
+          } else {
+            $tag = "v$version"
+          }
+
+          $tagVersion = $tag -replace '^v', ''
+          if ($tagVersion -ne $version) {
+            throw "Tag $tag does not match package.json version $version"
+          }
+
+          function Find-BuiltExe([string]$destName, [string[]]$patterns, [bool]$wantSetup) {
+            $dest = Join-Path $dist $destName
+            if (Test-Path -LiteralPath $dest) { return $dest }
+            $files = @(Get-ChildItem -Path $dist -Filter '*.exe' -File -ErrorAction SilentlyContinue)
+            foreach ($pattern in $patterns) {
+              $hit = $files | Where-Object {
+                if ($_.Name -notlike $pattern) { return $false }
+                $isSetup = $_.Name -match 'Setup'
+                if ($wantSetup) { return $isSetup }
+                return -not $isSetup
+              } | Select-Object -First 1
+              if ($hit) {
+                Copy-Item -LiteralPath $hit.FullName -Destination $dest -Force
+                return $dest
+              }
+            }
+            $names = @($files | ForEach-Object { $_.Name }) -join ', '
+            throw "Missing $destName in dist/ (found: $names)"
+          }
+
+          $portable = Find-BuiltExe 'Xtranslate-portable.exe' @('Xtranslate-portable*.exe', 'Xtranslate *.exe', '*.exe') $false
+          $setup = Find-BuiltExe 'Xtranslate-Setup.exe' @('Xtranslate-Setup*.exe', '*Setup*.exe') $true
+
+          $sumLines = foreach ($file in @($portable, $setup)) {
+            $hash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $(Split-Path $file -Leaf)"
+          }
+          $sumsPath = Join-Path $dist 'SHA256SUMS.txt'
+          [System.IO.File]::WriteAllText($sumsPath, (($sumLines -join "`n") + "`n"))
+
+          $files = @($portable, $setup, $sumsPath)
+          $title = "Xtranslate $version"
+          $notes = "Windows x64 builds (no Node required).`n`n- Xtranslate-portable.exe: portable; used by the one-line installer`n- Xtranslate-Setup.exe: NSIS wizard (per-user)`n`nirm https://raw.githubusercontent.com/hopechen067/Xtranslate/main/scripts/install.ps1 | iex"
+
+          $prevNative = $PSNativeCommandUseErrorActionPreference
+          $PSNativeCommandUseErrorActionPreference = $false
+          try {
+            gh release view $tag 2>$null | Out-Null
+            $releaseExists = ($LASTEXITCODE -eq 0)
+          } finally {
+            $PSNativeCommandUseErrorActionPreference = $prevNative
+          }
+
+          if ($releaseExists) {
+            gh release upload $tag @files --clobber
+          } else {
+            gh release create $tag @files --title $title --notes $notes --target $env:GITHUB_SHA
+          }

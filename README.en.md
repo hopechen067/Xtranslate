@@ -10,6 +10,27 @@ Translations aim to sound **conversational** — like something a person would a
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/popup-dark.png"><img src="docs/images/popup-light.png" alt="The translation popup" width="560"></picture></p>
 
+## Install
+
+No Node.js required. In **PowerShell**:
+
+```powershell
+irm https://raw.githubusercontent.com/hopechen067/Xtranslate/main/scripts/install.ps1 | iex
+```
+
+This downloads the latest portable build into your user folder, creates Start Menu and desktop shortcuts, and launches the app. No admin rights needed.
+
+If GitHub downloads are slow (e.g. from mainland China), set a mirror prefix (replace `ghproxy.net` with a proxy that currently works):
+
+```powershell
+$env:XTRANSLATE_MIRROR='https://ghproxy.net/'
+irm ($env:XTRANSLATE_MIRROR + 'https://raw.githubusercontent.com/hopechen067/Xtranslate/main/scripts/install.ps1') | iex
+```
+
+You can also grab `Xtranslate-Setup.exe` (NSIS wizard) or `Xtranslate-portable.exe` from [Releases](https://github.com/hopechen067/Xtranslate/releases/latest).
+
+After launch the app only appears in the **system tray** (bottom-right; it may be inside the `^` overflow). If Windows says the app is unrecognized, choose **More info** → **Run anyway**.
+
 ## Features
 
 - Lives in the system tray, no main window; summoned by a hotkey (default `Alt+Q`)
@@ -20,30 +41,6 @@ Translations aim to sound **conversational** — like something a person would a
   - **Free (no key):** Microsoft (reachable from mainland China, default), Google (needs a proxy in China), Tencent
   - **LLM (bring your own key):** Zhipu GLM, SiliconFlow, Gemini, Groq, Cerebras, OpenRouter, Qwen, DeepSeek, Kimi, Claude, OpenAI, or any OpenAI-compatible endpoint
 - API keys are encrypted with the OS `safeStorage` and never sent to the UI process
-
-## Quick start
-
-### Option 1: run from source
-
-Requires [Node.js](https://nodejs.org/) 18+.
-
-```bash
-git clone https://github.com/hopechen067/Xtranslate.git
-cd Xtranslate
-npm install
-npm start
-```
-
-### Option 2: build an installer
-
-```bash
-npm install
-npm run dist
-```
-
-Output goes to `dist/`: an NSIS installer and a portable build.
-
-After launch the app only appears in the **system tray** (bottom-right; it may be inside the `^` overflow).
 
 ## Usage guide
 
@@ -107,10 +104,21 @@ You can also pick **Custom** and enter any OpenAI-compatible `baseUrl`, model na
 
 ## Development
 
+Requires [Node.js](https://nodejs.org/) 18+.
+
 ```bash
-npm test          # node --test unit tests
-npm start         # run Electron
-npm run dist      # package
+git clone https://github.com/hopechen067/Xtranslate.git
+cd Xtranslate
+npm run setup          # install deps, build the exe, launch it (Windows)
+```
+
+Day-to-day work uses `npm start` (dev Electron) so you don't pack on every change.
+
+```bash
+npm install
+npm start              # development mode
+npm test               # node --test unit tests
+npm run dist           # NSIS installer + portable; output in dist/
 ```
 
 ```

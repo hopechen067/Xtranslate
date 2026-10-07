@@ -10,6 +10,27 @@
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/popup-dark.png"><img src="docs/images/popup-light.png" alt="热键呼出的翻译浮窗" width="560"></picture></p>
 
+## 安装
+
+不需要安装 Node。打开 **PowerShell**，执行：
+
+```powershell
+irm https://raw.githubusercontent.com/hopechen067/Xtranslate/main/scripts/install.ps1 | iex
+```
+
+会下载最新版免安装包，放到当前用户目录、创建开始菜单和桌面快捷方式，并启动。不需要管理员权限。
+
+国内 GitHub 下载慢或失败时，加镜像前缀再执行（把 `ghproxy.net` 换成当前能用的 GitHub 代理）：
+
+```powershell
+$env:XTRANSLATE_MIRROR='https://ghproxy.net/'
+irm ($env:XTRANSLATE_MIRROR + 'https://raw.githubusercontent.com/hopechen067/Xtranslate/main/scripts/install.ps1') | iex
+```
+
+也可以到 [Releases](https://github.com/hopechen067/Xtranslate/releases/latest) 下载 `Xtranslate-Setup.exe`（安装向导）或 `Xtranslate-portable.exe`（免安装）。
+
+启动后只出现在**系统托盘**（右下角，可能在 `^` 折叠区里）。若 Windows 提示「未识别的应用」，选「更多信息」→「仍要运行」。
+
 ## 特性
 
 - 托盘常驻，无主窗口；热键呼出（默认 `Alt+Q`），不打断当前工作
@@ -20,30 +41,6 @@
   - **免费（无需 Key）**：微软（国内直连，默认）、Google（国内需代理）、腾讯（最快，质量一般）
   - **大模型（自带 Key）**：智谱 GLM、硅基流动、Gemini、Groq、Cerebras、OpenRouter、通义千问、DeepSeek、Kimi、Claude、OpenAI，或任意兼容 OpenAI 协议的服务
 - API Key 使用系统 `safeStorage` 加密保存，不会发给界面进程
-
-## 快速开始
-
-### 方式一：从源码运行
-
-需要 [Node.js](https://nodejs.org/) 18+。
-
-```bash
-git clone https://github.com/hopechen067/Xtranslate.git
-cd Xtranslate
-npm install
-npm start
-```
-
-### 方式二：自己打包安装包
-
-```bash
-npm install
-npm run dist
-```
-
-产物在 `dist/` 下：NSIS 安装包和免安装的 portable 版。
-
-启动后程序只会出现在**系统托盘**（右下角，可能在 `^` 折叠区里）。
 
 ## 使用教程
 
@@ -108,10 +105,21 @@ npm run dist
 
 ## 开发
 
+需要 [Node.js](https://nodejs.org/) 18+。
+
 ```bash
-npm test          # node --test，单元测试
-npm start         # 启动 Electron
-npm run dist      # 打包
+git clone https://github.com/hopechen067/Xtranslate.git
+cd Xtranslate
+npm run setup          # 安装依赖、打包 exe 并启动（Windows）
+```
+
+日常改代码用 `npm start` 跑开发版 Electron，不必每次打包。
+
+```bash
+npm install
+npm start              # 开发模式
+npm test               # node --test，单元测试
+npm run dist           # 打出 NSIS 安装包 + portable，产物在 dist/
 ```
 
 目录结构：
