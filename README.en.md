@@ -10,6 +10,10 @@ Translations aim to sound **conversational** — like something a person would a
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/popup-dark.png"><img src="docs/images/popup-light.png" alt="The translation popup" width="560"></picture></p>
 
+## Native macOS port (community contribution)
+
+An independent Swift/AppKit implementation for Apple Silicon and macOS 13+ is available in [native/macos](native/macos/README.en.md), including build, test, and installation instructions. It adapts this project's translation workflow, prompts, and provider presets. The Windows application and its build remain unchanged.
+
 ## Install
 
 No Node.js required. In **PowerShell**:

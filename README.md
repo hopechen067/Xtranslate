@@ -10,6 +10,10 @@
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/popup-dark.png"><img src="docs/images/popup-light.png" alt="热键呼出的翻译浮窗" width="560"></picture></p>
 
+## macOS 原生版（社区移植）
+
+Apple Silicon / macOS 13+ 的独立 Swift/AppKit 实现位于 [native/macos](native/macos/README.md)，包含构建、测试和安装说明。它沿用本项目的翻译交互、提示词与服务商预设；Windows 版的使用和构建方式保持不变。
+
 ## 安装
 
 不需要安装 Node。打开 **PowerShell**，执行：

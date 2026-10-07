@@ -1,0 +1,93 @@
+[
+  {
+    "id": "zhipu",
+    "name": "智谱 GLM",
+    "baseURL": "https://open.bigmodel.cn/api/paas/v4",
+    "model": "glm-4-flash-250414",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "siliconflow",
+    "name": "硅基流动",
+    "baseURL": "https://api.siliconflow.cn/v1",
+    "model": "THUDM/GLM-4-9B-0414",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "gemini",
+    "name": "Google Gemini",
+    "baseURL": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "model": "gemini-2.5-flash-lite",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "groq",
+    "name": "Groq",
+    "baseURL": "https://api.groq.com/openai/v1",
+    "model": "qwen/qwen3.8-27b",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "cerebras",
+    "name": "Cerebras",
+    "baseURL": "https://api.cerebras.ai/v1",
+    "model": "qwen-3.8-27b",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "openrouter",
+    "name": "OpenRouter",
+    "baseURL": "https://openrouter.ai/api/v1",
+    "model": "google/gemma-4-31b-it:free",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "qwen",
+    "name": "通义千问（阿里云百炼）",
+    "baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model": "qwen-turbo",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "baseURL": "https://api.deepseek.com",
+    "model": "deepseek-flash",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "moonshot",
+    "name": "Kimi（月之暗面）",
+    "baseURL": "https://api.moonshot.cn/v1",
+    "model": "moonshot-v1-8k",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "anthropic",
+    "name": "Claude（Anthropic）",
+    "baseURL": "https://api.anthropic.com",
+    "model": "claude-haiku-4-5",
+    "apiStyle": "anthropic"
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI",
+    "baseURL": "https://api.openai.com/v1",
+    "model": "gpt-4.1-mini",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "ollama",
+    "name": "Ollama（本地）",
+    "baseURL": "http://localhost:11434/v1",
+    "model": "qwen2.5:7b",
+    "apiStyle": "openai"
+  },
+  {
+    "id": "custom",
+    "name": "自定义（OpenAI 兼容）",
+    "baseURL": "",
+    "model": "",
+    "apiStyle": "openai"
+  }
+]
